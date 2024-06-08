@@ -1,0 +1,165 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "Picaroon hub",
+    LoadingTitle = "Picaroon hub",
+    LoadingSubtitle = "by Picaroon",
+    ConfigurationSaving = {
+       Enabled = true,
+       FolderName = nil, -- Create a custom folder for your hub/game
+       FileName = "Big Hub"
+    },
+    Discord = {
+       Enabled = false,
+       Invite = "", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ABCD would be ABCD
+       RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+    },
+    KeySystem = false, -- Set this to true to use our key system
+    KeySettings = {
+       Title = "Untitled",
+       Subtitle = "Key System",
+       Note = "No method of obtaining the key is provided",
+       FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
+       SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
+       GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
+       Key = {"Hello"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
+    }
+})
+
+local PlayerTab = Window:CreateTab("Player", 4483362458) -- Title, Image
+
+local Slider = PlayerTab:CreateSlider({
+    Name = "WalkSpeed",
+    Range = {10, 100},
+    Increment = 1,
+    Suffix = "Speed",
+    CurrentValue = 10,
+    Flag = "Slider1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Callback = function(Value)
+        game.Players.LocalPlayer.Character:SetAttribute("SpeedMultiplier", Value)
+    end,
+})
+
+local Slider = PlayerTab:CreateSlider({
+    Name = "Dash Length",
+    Range = {10, 1000},
+    Increment = 1,
+    Suffix = "Length",
+    CurrentValue = 10,
+    Flag = "Slider2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Callback = function(Value)
+        game.Players.LocalPlayer.Character:SetAttribute("DashLength", Value)
+    end,
+})
+
+local Slider = PlayerTab:CreateSlider({
+    Name = "Jump Height",
+    Range = {10, 500},
+    Increment = 1,
+    Suffix = "Height",
+    CurrentValue = 10,
+    Flag = "Slider3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+    Callback = function(Value)
+        game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
+    end,
+})
+
+local FruitTab = Window:CreateTab("Fruit", 4483362458) -- Title, Image
+
+local Button = FruitTab:CreateButton({
+    Name = "TP to Fruit",
+    Callback = function()
+        local fruit = findNearestFruit()
+        if fruit then
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = fruit.CFrame
+        end
+    end,
+})
+
+-- Function to find the nearest fruit
+local function findNearestFruit()
+    local nearestFruit = nil
+    local shortestDistance = math.huge
+
+    for _, fruit in pairs(game.Workspace:GetChildren()) do
+        if fruit:IsA("Tool") and fruit:FindFirstChild("Fruit") then
+            local distance = (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - fruit.Handle.Position).Magnitude
+            if distance < shortestDistance then
+                shortestDistance = distance
+                nearestFruit = fruit
+            end
+        end
+    end
+
+    return nearestFruit
+end
+
+-- Function to create a notification
+local function createNotification(title, text)
+    Rayfield:Notify({
+        Title = title,
+        Content = text,
+        Duration = 5,
+        Image = 4483362458,
+    })
+end
+
+-- Function to check for new fruits
+local function checkForFruits()
+    while true do
+        for _, fruit in pairs(game.Workspace:GetChildren()) do
+            if fruit:IsA("Tool") and fruit:FindFirstChild("Fruit") then
+                createNotification("Fruit Notifier", "A new fruit has spawned: " .. fruit.Name)
+            end
+        end
+        wait(60) -- Check every 60 seconds
+    end
+end
+
+-- Function to initialize the notifier
+local function initializeFruitNotifier()
+    createNotification("Fruit Notifier", "Fruit Notifier is now active.")
+    spawn(checkForFruits)
+end
+
+-- Check if the player has the Fruit Notifier Game Pass
+local function hasFruitNotifierGamePass()
+    local gamePassID = 12345678 -- Replace with the actual Game Pass ID
+    local success, hasPass = pcall(function()
+        return game:GetService("MarketplaceService"):UserOwnsGamePassAsync(game.Players.LocalPlayer.UserId, gamePassID)
+    end)
+    return success and hasPass
+end
+
+-- Initialize the notifier if the player has the game pass
+if hasFruitNotifierGamePass() then
+    initializeFruitNotifier()
+else
+    createNotification("Fruit Notifier", "You do not own the Fruit Notifier Game Pass.")
+end
+
+local AutoClickTab = Window:CreateTab("Cooldown", 4483362458) -- Title, Image
+
+local UserInputService = game:GetService("UserInputService")
+
+local AutoClickTab = Window:CreateTab("AutoClick", 4483362458) -- Title, Image
+
+local Toggle = AutoClickTab:CreateToggle({
+    Name = "AutoClick",
+    CurrentValue = false,
+    Flag = "Toggle1",
+    Callback = function(Value)
+        if Value then
+            UserInputService.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    game:GetService("VirtualInputManager"):SendMouseButtonEvent(1, true, game)
+                end
+            end)
+            UserInputService.InputEnded:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    game:GetService("VirtualInputManager"):SendMouseButtonEvent(1, false, game)
+                end
+            end)
+        end
+    end,
+})
